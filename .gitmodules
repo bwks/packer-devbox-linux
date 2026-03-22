@@ -1,0 +1,3 @@
+[submodule "installer-scripts"]
+	path = installer-scripts
+	url = https://github.com/bwks/installer-scripts.git
