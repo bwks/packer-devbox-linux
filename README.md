@@ -22,17 +22,30 @@ The default user is `sherpa`. It is pre-added to the `docker`, `libvirt`, and `k
 - Packer ≥ 1.10
 - `ssh-keygen`
 
+## Build
+
+Clone the repo with submodules:
+
+```sh
+git clone --recurse-submodules https://github.com/bwks/packer-devbox.git
+cd packer-devbox
+```
+
 Install the QEMU plugin (one-time):
 
 ```sh
 packer init devbox.pkr.hcl
 ```
 
-## Build
+Generate a temporary build keypair and run Packer:
 
 ```sh
-# Generate a temporary build keypair and run Packer
-make build
+ssh-keygen -t ed25519 -f /tmp/packer_key -N "" -C "packer-build"
+
+packer build \
+  -var "ssh_public_key=$(cat /tmp/packer_key.pub)" \
+  -var "ssh_private_key_file=/tmp/packer_key" \
+  devbox.pkr.hcl
 ```
 
 The Ubuntu 24.04 cloud image is downloaded and cached in `packer_cache/` on first run.
