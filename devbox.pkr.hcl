@@ -49,7 +49,7 @@ source "qemu" "devbox" {
   accelerator  = "kvm"
   machine_type = "q35"
   cpus         = 4
-  memory       = 4096
+  memory       = 6144
   headless     = true
 
   # Cloud-init seed injected as a virtual CD-ROM (label must be "cidata")
@@ -108,13 +108,13 @@ build {
   # Zero out free space so qemu-img convert strips it cleanly
   provisioner "shell" {
     execute_command = "sudo bash '{{.Path}}'"
-    script          = "scripts/zero-disk.sh"
+    script          = "scripts/00-zero-disk.sh"
   }
 
   # Lock the build-only ubuntu account, reset cloud-init for end-user first-boot
   provisioner "shell" {
     execute_command = "sudo bash '{{.Path}}'"
-    script          = "scripts/cleanup.sh"
+    script          = "scripts/01-cleanup.sh"
   }
 
   # Sparsify: strip zeroed clusters and compress
