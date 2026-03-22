@@ -48,8 +48,9 @@ source "qemu" "devbox" {
   # VM resources
   accelerator  = "kvm"
   machine_type = "q35"
+  cpu_model    = "host"
   cpus         = 4
-  memory       = 6144
+  memory       = 8192
   headless     = true
 
   # Cloud-init seed injected as a virtual CD-ROM (label must be "cidata")
