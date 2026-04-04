@@ -92,7 +92,10 @@ build {
       "installer-scripts/shell/install-docker.sh",
       "installer-scripts/shell/install-virt.sh",
       "installer-scripts/shell/install-githubcli.sh",
-      "installer-scripts/shell/install-rust.sh",
+      "installer-scripts/shell/install-packer.sh",
+      "installer-scripts/shell/install-terraform.sh",
+      "installer-scripts/shell/install-awscli.sh",
+      "installer-scripts/shell/install-azurecli.sh",
     ]
   }
 
@@ -100,8 +103,10 @@ build {
   provisioner "shell" {
     execute_command = "sudo -u sherpa -i bash '{{.Path}}'"
     scripts = [
+      "installer-scripts/shell/install-rust.sh",
       "installer-scripts/shell/install-python-dev.sh",
       "installer-scripts/shell/install-claudecode.sh",
+      "installer-scripts/shell/install-zellij.sh",
       "installer-scripts/shell/setup-paths.sh",
     ]
   }
