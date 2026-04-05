@@ -89,6 +89,7 @@ build {
     execute_command = "sudo bash '{{.Path}}'"
     scripts = [
       "installer-scripts/shell/install-dev-dependencies.sh",
+      "installer-scripts/shell/install-qemu-guest-agent.sh",
       "installer-scripts/shell/install-docker.sh",
       "installer-scripts/shell/install-virt.sh",
       "installer-scripts/shell/install-githubcli.sh",
