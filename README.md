@@ -27,8 +27,7 @@ The default user is `sherpa`. It is pre-added to the `docker`, `libvirt`, and `k
 Clone the repo with submodules:
 
 ```sh
-git clone --recurse-submodules https://github.com/bwks/packer-devbox-linux.git
-cd packer-devbox-linux
+gh repo clone bwks/packer-devbox-linux -- --recurse-submodules && cd packer-devbox-linux
 ```
 
 Install the QEMU plugin (one-time):
@@ -89,7 +88,5 @@ ssh -p 2222 sherpa@localhost
 The installer scripts are a git submodule tracking the `main` branch. To pull the latest:
 
 ```sh
-git submodule update --remote installer-scripts
-git add installer-scripts
-git commit -m "bump installer-scripts"
+git submodule update --remote installer-scripts && git add installer-scripts && git commit -m "bump installer-scripts"
 ```

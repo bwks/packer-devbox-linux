@@ -84,6 +84,18 @@ build {
     ]
   }
 
+  # Upload helper script that install-packer.sh and install-terraform.sh
+  # expect to find in the same directory (Packer uploads scripts to /tmp/
+  # individually, so SCRIPT_DIR-relative lookups need this in place).
+  provisioner "file" {
+    source      = "installer-scripts/shell/setup-hashicorp-repo.sh"
+    destination = "/tmp/setup-hashicorp-repo.sh"
+  }
+
+  provisioner "shell" {
+    inline = ["chmod +x /tmp/setup-hashicorp-repo.sh"]
+  }
+
   # Root-level installers
   provisioner "shell" {
     execute_command = "sudo bash '{{.Path}}'"
@@ -97,6 +109,7 @@ build {
       "installer-scripts/shell/install-terraform.sh",
       "installer-scripts/shell/install-awscli.sh",
       "installer-scripts/shell/install-azurecli.sh",
+      "installer-scripts/shell/install-unikraft.sh",
     ]
   }
 
@@ -108,6 +121,7 @@ build {
       "installer-scripts/shell/install-python-dev.sh",
       "installer-scripts/shell/install-claudecode.sh",
       "installer-scripts/shell/install-zellij.sh",
+      "installer-scripts/shell/install-nanos.sh",
       "installer-scripts/shell/setup-paths.sh",
     ]
   }
