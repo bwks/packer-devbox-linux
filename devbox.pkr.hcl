@@ -110,6 +110,7 @@ build {
       "installer-scripts/shell/install-awscli.sh",
       "installer-scripts/shell/install-azurecli.sh",
       "installer-scripts/shell/install-unikraft.sh",
+      "installer-scripts/shell/install-nodejs.sh",
     ]
   }
 
@@ -120,6 +121,8 @@ build {
       "installer-scripts/shell/install-rust.sh",
       "installer-scripts/shell/install-python-dev.sh",
       "installer-scripts/shell/install-claudecode.sh",
+      "installer-scripts/shell/install-opencode.sh",
+      "installer-scripts/shell/install-pi.sh",
       "installer-scripts/shell/install-zellij.sh",
       "installer-scripts/shell/install-nanos.sh",
       "installer-scripts/shell/setup-paths.sh",
