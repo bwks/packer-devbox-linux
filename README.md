@@ -1,6 +1,6 @@
 # packer-devbox
 
-Packer template that builds a base Ubuntu 24.04 developer VM as a qcow2 image.
+Packer template that builds a base Ubuntu 26.04 or 24.04 developer VM as a qcow2 image. Ubuntu 26.04 LTS is the default.
 
 ## What's included
 
@@ -11,7 +11,9 @@ Packer template that builds a base Ubuntu 24.04 developer VM as a qcow2 image.
 | GitHub CLI | `gh` via official apt repo |
 | Rust | Stable toolchain via rustup |
 | Python tools | `uv`, `ruff`, `ty` via Astral installers |
+| Codex | CLI and Linux sandbox dependencies via official installer |
 | Claude Code | CLI via official installer |
+| Herdr | CLI via official installer |
 | Build dependencies | `build-essential`, `pkg-config`, `libssl-dev`, `libvirt-dev`, etc. |
 
 The default user is `sherpa`. It is pre-added to the `docker`, `libvirt`, and `kvm` groups. Cloud-init runs on first boot so SSH keys, passwords, and any further configuration are set by the user.
@@ -21,6 +23,8 @@ The default user is `sherpa`. It is pre-added to the `docker`, `libvirt`, and `k
 - QEMU/KVM (`qemu-system-x86_64`, `/dev/kvm`)
 - Packer ≥ 1.10
 - `ssh-keygen`
+
+Ubuntu 26.04 LTS is supported through April 2031. Its cloud images require an AMD64v3-capable CPU; use the Ubuntu 24.04 build option on older x86-64 hosts. See the [Ubuntu 26.04 release notes](https://documentation.ubuntu.com/release-notes/26.04/) for compatibility details.
 
 ## Build
 
@@ -47,7 +51,17 @@ packer build \
   devbox.pkr.hcl
 ```
 
-The Ubuntu 24.04 cloud image is downloaded and cached in `packer_cache/` on first run.
+The Ubuntu 26.04 cloud image is downloaded and cached in `packer_cache/` on first run.
+
+To build Ubuntu 24.04 instead:
+
+```sh
+packer build \
+  -var "ubuntu_version=24.04" \
+  -var "ssh_public_key=$(cat /tmp/packer_key.pub)" \
+  -var "ssh_private_key_file=/tmp/packer_key" \
+  devbox.pkr.hcl
+```
 
 Output: `output/devbox.qcow2` (~20 GB sparse qcow2)
 
@@ -82,6 +96,20 @@ Then SSH in:
 ```sh
 ssh -p 2222 sherpa@localhost
 ```
+
+## Verifying an image
+
+The verification script boots a copy-on-write overlay and checks the Ubuntu version, first-boot initialization, services, and installed tools:
+
+```sh
+scripts/02-verify.sh output/devbox.qcow2 26.04
+```
+
+Pass `24.04` as the second argument when verifying a Noble image.
+
+### Azure CLI on Ubuntu 26.04
+
+Microsoft does not yet publish an Azure CLI repository for Resolute. The installer uses Microsoft's Noble repository on Ubuntu 26.04, following its documented fallback for newer distributions. Set `AZ_REPO` to override that suite after Microsoft adds native support.
 
 ## Updating installer scripts
 

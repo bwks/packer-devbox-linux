@@ -4,7 +4,16 @@
 set -euo pipefail
 
 IMAGE="${1:-output/devbox.qcow2}"
+EXPECTED_VERSION="${2:-26.04}"
 SSH_PORT=2222
+
+case "$EXPECTED_VERSION" in
+  24.04|26.04) ;;
+  *)
+    echo "Error: expected version must be 24.04 or 26.04"
+    exit 1
+    ;;
+esac
 
 if [ ! -f "$IMAGE" ]; then
   echo "Error: image not found at $IMAGE"
@@ -34,16 +43,17 @@ trap cleanup EXIT
 
 echo "=== devbox verification ==="
 echo "Image: $IMAGE"
+echo "Expected Ubuntu version: $EXPECTED_VERSION"
 echo ""
 
 # Generate a temporary SSH keypair for this verify session
 ssh-keygen -t ed25519 -f "$VERIFY_KEY" -N "" -C "devbox-verify" -q
 
-# Build a cloud-init seed ISO so cloud-init can create the ubuntu user on boot
+# Build a cloud-init seed ISO so cloud-init can configure the sherpa user on boot
 cat > "$TMPDIR_WORK/user-data" << USERDATA
 #cloud-config
 users:
-  - name: ubuntu
+  - name: sherpa
     ssh_authorized_keys:
       - $(cat "${VERIFY_KEY}.pub")
     sudo: ALL=(ALL) NOPASSWD:ALL
@@ -99,7 +109,7 @@ echo "Waiting for SSH..."
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o LogLevel=ERROR -p $SSH_PORT -i $VERIFY_KEY"
 
 for i in $(seq 1 60); do
-  if ssh $SSH_OPTS ubuntu@localhost "true" 2>/dev/null; then
+  if ssh $SSH_OPTS sherpa@localhost "true" 2>/dev/null; then
     echo "SSH ready after ~$((i * 5))s."
     break
   fi
@@ -115,11 +125,18 @@ echo ""
 echo "--- Running verification checks ---"
 echo ""
 
-ssh $SSH_OPTS ubuntu@localhost << 'CHECKS'
+ssh $SSH_OPTS sherpa@localhost "EXPECTED_VERSION='$EXPECTED_VERSION' bash -s" << 'CHECKS'
 set -e
 
 pass() { echo "[PASS] $1"; }
 fail() { echo "[FAIL] $1"; exit 1; }
+
+# Operating system and first-boot initialization
+. /etc/os-release
+[ "$VERSION_ID" = "$EXPECTED_VERSION" ] && pass "Ubuntu $EXPECTED_VERSION" || fail "expected Ubuntu $EXPECTED_VERSION, found $VERSION_ID"
+cloud-init status --wait 2>&1 | grep -q "status: done" && pass "cloud-init completed" || fail "cloud-init did not complete cleanly"
+[ -s /etc/machine-id ] && pass "machine-id regenerated" || fail "machine-id was not regenerated"
+[ ! -e /etc/sudoers.d/packer-sherpa ] && pass "temporary build sudo rule removed" || fail "temporary build sudo rule remains"
 
 # Docker
 systemctl is-active --quiet docker && pass "docker.service active" || fail "docker.service not active"
@@ -134,6 +151,18 @@ id sherpa | grep -q "kvm" && pass "sherpa in kvm group" || fail "sherpa not in k
 # GitHub CLI
 gh --version | grep -q "gh version" && pass "gh CLI available" || fail "gh CLI missing"
 
+# Cloud CLIs
+aws --version 2>&1 | grep -q "aws-cli" && pass "AWS CLI available" || fail "AWS CLI missing"
+az version > /dev/null && pass "Azure CLI available" || fail "Azure CLI missing"
+
+# Node.js (installed under sherpa via NVM)
+bash -lc 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; node --version; npm --version' > /dev/null && pass "Node.js and npm available" || fail "Node.js or npm missing"
+
+# Coding agents (installed under sherpa)
+~/.local/bin/codex --version > /dev/null && pass "Codex CLI available" || fail "Codex CLI missing"
+~/.local/bin/herdr --version > /dev/null && pass "Herdr available" || fail "Herdr missing"
+bwrap --unshare-user --unshare-net --uid 0 --gid 0 --ro-bind / / /bin/true && pass "Codex bubblewrap sandbox available" || fail "Codex bubblewrap sandbox unavailable"
+
 # Python tools (installed under sherpa)
 sudo -u sherpa -i bash -c 'uv --version' | grep -q "uv" && pass "uv available" || fail "uv missing"
 sudo -u sherpa -i bash -c 'ruff --version' | grep -q "ruff" && pass "ruff available" || fail "ruff missing"
@@ -146,17 +175,13 @@ sudo -u sherpa -i bash -c 'source ~/.cargo/env && cargo --version' | grep -q "ca
 dpkg -l build-essential | grep -q "^ii" && pass "build-essential installed" || fail "build-essential missing"
 dpkg -l libssl-dev | grep -q "^ii" && pass "libssl-dev installed" || fail "libssl-dev missing"
 
-# cloud-init was reset
-sudo cloud-init status 2>&1 | grep -qv "error" && pass "cloud-init ran cleanly" || true
-[ ! -s /etc/machine-id ] && pass "machine-id cleared" || fail "machine-id not cleared"
-
 echo ""
 echo "All checks passed."
 CHECKS
 
 echo ""
 echo "Shutting down verify VM..."
-ssh $SSH_OPTS ubuntu@localhost "sudo shutdown -P now" 2>/dev/null || true
+ssh $SSH_OPTS sherpa@localhost "sudo shutdown -P now" 2>/dev/null || true
 
 # Give it a moment to shut down
 for i in $(seq 1 15); do

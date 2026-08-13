@@ -2,7 +2,7 @@
 
 ## What this repo is
 
-A Packer/QEMU template that builds a base Ubuntu 24.04 developer VM as a qcow2 image. The default user is `sherpa`.
+A Packer/QEMU template that builds a base Ubuntu 26.04 or 24.04 developer VM as a qcow2 image. Ubuntu 26.04 is the default and the default user is `sherpa`.
 
 ## Repo structure
 
@@ -41,6 +41,8 @@ packer build \
   devbox.pkr.hcl
 ```
 
+Set `-var "ubuntu_version=24.04"` to build Noble instead. Ubuntu 26.04 requires an AMD64v3-capable host CPU.
+
 Output: `output/devbox.qcow2`
 
 If the build fails and leaves a stale `output/` directory, remove it before retrying: `rm -rf output/`
@@ -48,8 +50,8 @@ If the build fails and leaves a stale `output/` directory, remove it before retr
 ## Packer provisioner order
 
 1. Create `sherpa` user
-2. Root-level installers (docker, virt, gh, rust, dev-deps) — `sudo bash`
-3. User-level installers (python-dev, claudecode, setup-paths) — `sudo -u sherpa -i bash`
+2. Root-level installers (dev-deps, docker, virt, cloud CLIs, HashiCorp tools) — `sudo bash`
+3. User-level installers (Rust, Python tools, Codex, Claude Code, Herdr, other coding agents, Node.js, setup-paths) — `sudo -u sherpa -i bash`
 4. `scripts/00-zero-disk.sh` — zero free space
 5. `scripts/01-cleanup.sh` — lock ubuntu user, reset cloud-init
 6. Post-processor: sparsify/compress image with `qemu-img convert`

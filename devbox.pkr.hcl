@@ -18,6 +18,17 @@ variable "ssh_private_key_file" {
   description = "Path to the temporary SSH private key for Packer build access"
 }
 
+variable "ubuntu_version" {
+  type        = string
+  default     = "26.04"
+  description = "Ubuntu Server LTS version to build"
+
+  validation {
+    condition     = contains(["24.04", "26.04"], var.ubuntu_version)
+    error_message = "Ubuntu version must be one of: 24.04, 26.04."
+  }
+}
+
 variable "output_dir" {
   type    = string
   default = "output"
@@ -29,8 +40,13 @@ variable "vm_name" {
 }
 
 locals {
-  ubuntu_url      = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
-  ubuntu_checksum = "file:https://cloud-images.ubuntu.com/noble/current/SHA256SUMS"
+  ubuntu_codenames = {
+    "24.04" = "noble"
+    "26.04" = "resolute"
+  }
+  ubuntu_codename = local.ubuntu_codenames[var.ubuntu_version]
+  ubuntu_url      = "https://cloud-images.ubuntu.com/${local.ubuntu_codename}/current/${local.ubuntu_codename}-server-cloudimg-amd64.img"
+  ubuntu_checksum = "file:https://cloud-images.ubuntu.com/${local.ubuntu_codename}/current/SHA256SUMS"
 }
 
 source "qemu" "devbox" {
@@ -81,6 +97,9 @@ build {
     inline = [
       "sudo useradd -m -s /bin/bash -G sudo sherpa",
       "sudo passwd -l sherpa",
+      "echo 'sherpa ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/packer-sherpa >/dev/null",
+      "sudo chmod 0440 /etc/sudoers.d/packer-sherpa",
+      "sudo visudo -cf /etc/sudoers.d/packer-sherpa",
     ]
   }
 
@@ -110,7 +129,6 @@ build {
       "installer-scripts/shell/install-awscli.sh",
       "installer-scripts/shell/install-azurecli.sh",
       "installer-scripts/shell/install-unikraft.sh",
-      "installer-scripts/shell/install-nodejs.sh",
     ]
   }
 
@@ -120,8 +138,11 @@ build {
     scripts = [
       "installer-scripts/shell/install-rust.sh",
       "installer-scripts/shell/install-python-dev.sh",
+      "installer-scripts/shell/install-codex.sh",
       "installer-scripts/shell/install-claudecode.sh",
+      "installer-scripts/shell/install-herdr.sh",
       "installer-scripts/shell/install-opencode.sh",
+      "installer-scripts/shell/install-nodejs.sh",
       "installer-scripts/shell/install-pi.sh",
       "installer-scripts/shell/install-zellij.sh",
       "installer-scripts/shell/install-nanos.sh",

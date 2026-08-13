@@ -9,6 +9,9 @@ rm -f /home/ubuntu/.ssh/authorized_keys
 passwd -l ubuntu
 usermod -s /usr/sbin/nologin ubuntu
 
+# Remove the temporary passwordless sudo rule used by user-level installers.
+rm -f /etc/sudoers.d/packer-sherpa
+
 # Reset cloud-init so it runs fresh on first boot
 cloud-init clean --logs --seed
 
