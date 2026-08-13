@@ -174,6 +174,7 @@ sudo -u sherpa -i bash -c 'source ~/.cargo/env && cargo --version' | grep -q "ca
 # Build dependencies
 dpkg -l build-essential | grep -q "^ii" && pass "build-essential installed" || fail "build-essential missing"
 dpkg -l libssl-dev | grep -q "^ii" && pass "libssl-dev installed" || fail "libssl-dev missing"
+stow --version | grep -q "GNU Stow" && pass "GNU Stow available" || fail "GNU Stow missing"
 
 echo ""
 echo "All checks passed."

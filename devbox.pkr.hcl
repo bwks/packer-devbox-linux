@@ -69,6 +69,14 @@ source "qemu" "devbox" {
   memory       = 8192
   headless     = true
 
+  # Expose the standard QEMU guest-agent channel while provisioning so the
+  # installer can start and validate qemu-guest-agent inside the build VM.
+  qemuargs = [
+    ["-chardev", "null,id=qga0"],
+    ["-device", "virtio-serial"],
+    ["-device", "virtserialport,chardev=qga0,name=org.qemu.guest_agent.0"],
+  ]
+
   # Cloud-init seed injected as a virtual CD-ROM (label must be "cidata")
   cd_content = {
     "user-data" = templatefile("${path.root}/http/user-data.pkrtpl.hcl", {
@@ -120,6 +128,7 @@ build {
     execute_command = "sudo bash '{{.Path}}'"
     scripts = [
       "installer-scripts/shell/install-dev-dependencies.sh",
+      "installer-scripts/shell/install-devtools.sh",
       "installer-scripts/shell/install-qemu-guest-agent.sh",
       "installer-scripts/shell/install-docker.sh",
       "installer-scripts/shell/install-virt.sh",
@@ -144,7 +153,6 @@ build {
       "installer-scripts/shell/install-opencode.sh",
       "installer-scripts/shell/install-nodejs.sh",
       "installer-scripts/shell/install-pi.sh",
-      "installer-scripts/shell/install-zellij.sh",
       "installer-scripts/shell/install-nanos.sh",
       "installer-scripts/shell/setup-paths.sh",
     ]
