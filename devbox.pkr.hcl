@@ -150,6 +150,7 @@ build {
       "installer-scripts/shell/install-codex.sh",
       "installer-scripts/shell/install-claudecode.sh",
       "installer-scripts/shell/install-herdr.sh",
+      "installer-scripts/shell/install-tuicr.sh",
       "installer-scripts/shell/install-opencode.sh",
       "installer-scripts/shell/install-nodejs.sh",
       "installer-scripts/shell/install-pi.sh",
