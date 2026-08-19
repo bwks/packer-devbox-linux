@@ -162,6 +162,7 @@ bash -lc 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; node --version; npm 
 ~/.local/bin/codex --version > /dev/null && pass "Codex CLI available" || fail "Codex CLI missing"
 ~/.local/bin/herdr --version > /dev/null && pass "Herdr available" || fail "Herdr missing"
 ~/.local/bin/tuicr --version > /dev/null && pass "tuicr available" || fail "tuicr missing"
+~/.local/bin/pass-cli --version > /dev/null && pass "Proton Pass CLI available" || fail "Proton Pass CLI missing"
 bwrap --unshare-user --unshare-net --uid 0 --gid 0 --ro-bind / / /bin/true && pass "Codex bubblewrap sandbox available" || fail "Codex bubblewrap sandbox unavailable"
 
 # Python tools (installed under sherpa)

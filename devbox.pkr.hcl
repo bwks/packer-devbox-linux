@@ -154,6 +154,7 @@ build {
       "installer-scripts/shell/install-opencode.sh",
       "installer-scripts/shell/install-nodejs.sh",
       "installer-scripts/shell/install-pi.sh",
+      "installer-scripts/shell/install-protonpass-cli.sh",
       "installer-scripts/shell/install-nanos.sh",
       "installer-scripts/shell/setup-paths.sh",
     ]
