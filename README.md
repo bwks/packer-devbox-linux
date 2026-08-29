@@ -15,6 +15,7 @@ Packer template that builds a base Ubuntu 26.04 or 24.04 developer VM as a qcow2
 | Claude Code | CLI via official installer |
 | Herdr | CLI via official installer |
 | tuicr | Terminal UI for code review via official installer |
+| mise | Development environment and tool version manager via official installer |
 | Proton Pass CLI | Terminal access to Proton Pass vaults and secrets via official installer |
 | Build dependencies | `build-essential`, `pkg-config`, `libssl-dev`, `libvirt-dev`, etc. |
 

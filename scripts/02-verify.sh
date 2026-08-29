@@ -169,6 +169,9 @@ bwrap --unshare-user --unshare-net --uid 0 --gid 0 --ro-bind / / /bin/true && pa
 sudo -u sherpa -i bash -c 'uv --version' | grep -q "uv" && pass "uv available" || fail "uv missing"
 sudo -u sherpa -i bash -c 'ruff --version' | grep -q "ruff" && pass "ruff available" || fail "ruff missing"
 
+# Development environment manager (installed under sherpa)
+sudo -u sherpa -i bash -c 'mise --version' > /dev/null && pass "mise available" || fail "mise missing"
+
 # Rust (installed under sherpa)
 sudo -u sherpa -i bash -c 'source ~/.cargo/env && rustc --version' | grep -q "rustc" && pass "rustc available" || fail "rustc missing"
 sudo -u sherpa -i bash -c 'source ~/.cargo/env && cargo --version' | grep -q "cargo" && pass "cargo available" || fail "cargo missing"
