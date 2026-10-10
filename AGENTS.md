@@ -147,7 +147,17 @@ was not built.
 ## Current mise integration
 
 `installer-scripts/shell/install-mise.sh` installs mise for `sherpa` at
-`~/.local/bin/mise` and configures shell activation. It is invoked from the
-user-level provisioner in `devbox.pkr.hcl`. Verification runs `mise --version`
-as `sherpa` through a login shell. The image includes the mise CLI but does not
-preinstall language runtimes or create a global mise tool configuration.
+`~/.local/bin/mise` and configures shell activation. It is invoked first in the
+user-level provisioner. `scripts/install-mise-tools.sh` installs the global
+selections from `scripts/devbox-tools.toml`, including Node.js LTS, Rust stable,
+Codex, Claude Code, GitHub CLI, Packer, Terraform, AWS/Azure CLIs, uv, ruff, ty,
+Herdr, OpenCode, and Pi. Add or change mise tools in that manifest and update
+verification and the README together. Login shells use mise shims. Claude's
+built-in updates are disabled with `DISABLE_UPDATES=1`; use `mise upgrade` for
+updates. Codex sandbox packages remain in the root-level
+`scripts/install-codex-sandbox.sh` provisioner.
+
+Proton Pass CLI, Unikraft, and Nanos retain their existing installers. tuicr is
+not included. System services, libraries, and build packages remain installed
+through the root-level provisioner. Do not reintroduce standalone installers
+for tools selected in the mise manifest.

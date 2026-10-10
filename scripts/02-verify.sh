@@ -88,7 +88,8 @@ echo "Created QEMU overlay."
 echo "Booting VM on SSH port $SSH_PORT..."
 
 qemu-system-x86_64 \
-  -m 2048 \
+  -m 4096 \
+  -cpu host \
   -smp 2 \
   -enable-kvm \
   -machine q35 \
@@ -106,7 +107,7 @@ echo "VM started (PID $(cat "$QEMU_PID_FILE"))."
 echo ""
 echo "Waiting for SSH..."
 
-SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o LogLevel=ERROR -p $SSH_PORT -i $VERIFY_KEY"
+SSH_OPTS="-o UserKnownHostsFile=$TMPDIR_WORK/known_hosts -o StrictHostKeyChecking=no -o ConnectTimeout=5 -o LogLevel=ERROR -p $SSH_PORT -i $VERIFY_KEY"
 
 for i in $(seq 1 60); do
   if ssh $SSH_OPTS sherpa@localhost "true" 2>/dev/null; then
@@ -148,33 +149,51 @@ systemctl is-active --quiet libvirtd && pass "libvirtd.service active" || fail "
 id sherpa | grep -q "libvirt" && pass "sherpa in libvirt group" || fail "sherpa not in libvirt group"
 id sherpa | grep -q "kvm" && pass "sherpa in kvm group" || fail "sherpa not in kvm group"
 
-# GitHub CLI
-gh --version | grep -q "gh version" && pass "gh CLI available" || fail "gh CLI missing"
+# Tailscale (authentication is left to the image user)
+tailscale version > /dev/null && pass "Tailscale CLI available" || fail "Tailscale CLI missing"
+systemctl is-active --quiet tailscaled && pass "tailscaled.service active" || fail "tailscaled.service not active"
+systemctl is-enabled --quiet tailscaled && pass "tailscaled.service enabled" || fail "tailscaled.service not enabled"
 
-# Cloud CLIs
-aws --version 2>&1 | grep -q "aws-cli" && pass "AWS CLI available" || fail "AWS CLI missing"
-az version > /dev/null && pass "Azure CLI available" || fail "Azure CLI missing"
-
-# Node.js (installed under sherpa via NVM)
-bash -lc 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; node --version; npm --version' > /dev/null && pass "Node.js and npm available" || fail "Node.js or npm missing"
-
-# Coding agents (installed under sherpa)
-~/.local/bin/codex --version > /dev/null && pass "Codex CLI available" || fail "Codex CLI missing"
-~/.local/bin/herdr --version > /dev/null && pass "Herdr available" || fail "Herdr missing"
-~/.local/bin/tuicr --version > /dev/null && pass "tuicr available" || fail "tuicr missing"
-~/.local/bin/pass-cli --version > /dev/null && pass "Proton Pass CLI available" || fail "Proton Pass CLI missing"
-bwrap --unshare-user --unshare-net --uid 0 --gid 0 --ro-bind / / /bin/true && pass "Codex bubblewrap sandbox available" || fail "Codex bubblewrap sandbox unavailable"
-
-# Python tools (installed under sherpa)
-sudo -u sherpa -i bash -c 'uv --version' | grep -q "uv" && pass "uv available" || fail "uv missing"
-sudo -u sherpa -i bash -c 'ruff --version' | grep -q "ruff" && pass "ruff available" || fail "ruff missing"
-
-# Development environment manager (installed under sherpa)
+# User-scoped tools must resolve and run in a sherpa login shell.
 sudo -u sherpa -i bash -c 'mise --version' > /dev/null && pass "mise available" || fail "mise missing"
+for spec in gh:gh packer:packer terraform:terraform aws-cli:aws azure:az uv:uv ruff:ruff ty:ty herdr:herdr opencode:opencode codex:codex claude:claude node:node node:npm npm:@mariozechner/pi-coding-agent:pi; do
+  tool="${spec%:*}"
+  command_name="${spec##*:}"
+  if sudo -u sherpa -i bash -s -- "$tool" "$command_name" <<'TOOL_CHECK'
+    set -euo pipefail
+    tool="$1"
+    command_name="$2"
+    mise where "$tool" > /dev/null
+    managed="$(mise which "$command_name")"
+    case "$managed" in
+      "$HOME/.local/share/mise/installs/"*) ;;
+      *) exit 1 ;;
+    esac
+    [ "$(readlink -f "$(command -v "$command_name")")" = "$(readlink -f "$HOME/.local/share/mise/shims/$command_name")" ]
+    [ ! -e "$HOME/.local/bin/$command_name" ]
+    case "$command_name" in
+      az) az version > /dev/null ;;
+      *) "$command_name" --version > /dev/null ;;
+    esac
+    [ "$DISABLE_UPDATES" = 1 ]
+TOOL_CHECK
+  then
+    pass "$command_name managed by mise"
+  else
+    fail "$command_name unavailable or not managed by mise"
+  fi
+done
 
-# Rust (installed under sherpa)
-sudo -u sherpa -i bash -c 'source ~/.cargo/env && rustc --version' | grep -q "rustc" && pass "rustc available" || fail "rustc missing"
-sudo -u sherpa -i bash -c 'source ~/.cargo/env && cargo --version' | grep -q "cargo" && pass "cargo available" || fail "cargo missing"
+# Rust uses rustup proxies and toolchains rather than ordinary mise binaries.
+sudo -u sherpa -i bash -c 'set -euo pipefail; mise where rust; rustc --version; cargo --version; mise exec -- rustup show active-toolchain' > /dev/null && pass "Rust and Cargo available through mise" || fail "Rust or Cargo missing"
+sudo -u sherpa -i bash -c 'test ! -d "$HOME/.nvm"' && pass "NVM replaced by mise" || fail "legacy NVM installation remains"
+
+# Tools retained on their existing installers.
+sudo -u sherpa -i bash -c 'pass-cli --version' > /dev/null && pass "Proton Pass CLI available" || fail "Proton Pass CLI missing"
+sudo -u sherpa -i bash -c '"$HOME/.ops/bin/ops" version' > /dev/null && pass "Nanos ops available" || fail "Nanos ops missing"
+kraft version > /dev/null && pass "Unikraft kraft available" || fail "Unikraft kraft missing"
+sudo -u sherpa -i bash -c '! command -v tuicr >/dev/null && test ! -e "$HOME/.local/bin/tuicr"' && pass "tuicr omitted" || fail "tuicr remains installed"
+bwrap --unshare-user --unshare-net --uid 0 --gid 0 --ro-bind / / /bin/true && pass "Codex bubblewrap sandbox available" || fail "Codex bubblewrap sandbox unavailable"
 
 # Build dependencies
 dpkg -l build-essential | grep -q "^ii" && pass "build-essential installed" || fail "build-essential missing"

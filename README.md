@@ -8,16 +8,31 @@ Packer template that builds a base Ubuntu 26.04 or 24.04 developer VM as a qcow2
 |------|---------|
 | Docker Engine | CE, CLI, Buildx, Compose plugin |
 | QEMU/KVM + libvirt | For running nested VMs |
-| GitHub CLI | `gh` via official apt repo |
-| Rust | Stable toolchain via rustup |
-| Python tools | `uv`, `ruff`, `ty` via Astral installers |
-| Codex | CLI and Linux sandbox dependencies via official installer |
-| Claude Code | CLI via official installer |
-| Herdr | CLI via official installer |
-| tuicr | Terminal UI for code review via official installer |
-| mise | Development environment and tool version manager via official installer |
+| GitHub CLI | `gh` managed by mise |
+| Rust | Stable toolchain managed by mise through rustup |
+| Python tools | `uv`, `ruff`, `ty` managed by mise |
+| Codex | CLI managed exclusively by mise; AppArmor and bubblewrap sandbox dependencies via apt |
+| Claude Code | CLI managed exclusively by mise; built-in updates disabled |
+| Herdr | CLI managed by mise |
+| mise | Tool version manager via official installer; global tools selected in `scripts/devbox-tools.toml` |
+| Tailscale | CLI and enabled `tailscaled` service via official apt repository; run `sudo tailscale up` to connect |
+| Packer and Terraform | Managed by mise |
+| AWS CLI | v2 managed by mise |
+| Azure CLI | Managed by mise |
+| Node.js and npm | Latest LTS managed by mise; replaces NVM |
+| OpenCode | AI coding agent managed by mise |
+| Pi | Coding agent managed by mise’s npm backend (`@mariozechner/pi-coding-agent`) |
+| Unikraft | `kraft` CLI (kraftkit) via official apt repository |
+| Nanos | `ops` CLI via official installer |
+| QEMU guest agent | Enabled `qemu-guest-agent` service |
 | Proton Pass CLI | Terminal access to Proton Pass vaults and secrets via official installer |
-| Build dependencies | `build-essential`, `pkg-config`, `libssl-dev`, `libvirt-dev`, etc. |
+| GNU Stow | Symlink manager via apt |
+| Build and disk tools | `build-essential`, `pkg-config`, `libssl-dev`, `libvirt-dev`, `genisoimage`, `mtools`, `e2fsprogs`, `unzip` |
+| VM support | `qemu-utils`, libvirt clients, `bridge-utils`, `virtinst`, OVMF firmware |
+
+The build copies `scripts/devbox-tools.toml` to `~sherpa/.config/mise/config.toml` and installs its tools as `sherpa`. It selects Node.js LTS, Rust stable, and the latest CLI releases during each build. Update these tools with `mise upgrade`. Login shells expose mise shims, and interactive Bash uses mise activation. Claude's built-in updates are disabled; mise manages its updates.
+
+Proton Pass CLI, Unikraft, and Nanos retain their existing installers. System packages and services also retain their root-level installers. tuicr is no longer included.
 
 The default user is `sherpa`. It is pre-added to the `docker`, `libvirt`, and `kvm` groups. Cloud-init runs on first boot so SSH keys, passwords, and any further configuration are set by the user.
 
@@ -109,10 +124,6 @@ scripts/02-verify.sh output/devbox.qcow2 26.04
 ```
 
 Pass `24.04` as the second argument when verifying a Noble image.
-
-### Azure CLI on Ubuntu 26.04
-
-Microsoft does not yet publish an Azure CLI repository for Resolute. The installer uses Microsoft's Noble repository on Ubuntu 26.04, following its documented fallback for newer distributions. Set `AZ_REPO` to override that suite after Microsoft adds native support.
 
 ## Updating installer scripts
 

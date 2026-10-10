@@ -111,16 +111,10 @@ build {
     ]
   }
 
-  # Upload helper script that install-packer.sh and install-terraform.sh
-  # expect to find in the same directory (Packer uploads scripts to /tmp/
-  # individually, so SCRIPT_DIR-relative lookups need this in place).
+  # Global tool selections used by the sherpa mise provisioner.
   provisioner "file" {
-    source      = "installer-scripts/shell/setup-hashicorp-repo.sh"
-    destination = "/tmp/setup-hashicorp-repo.sh"
-  }
-
-  provisioner "shell" {
-    inline = ["chmod +x /tmp/setup-hashicorp-repo.sh"]
+    source      = "scripts/devbox-tools.toml"
+    destination = "/tmp/devbox-tools.toml"
   }
 
   # Root-level installers
@@ -129,14 +123,11 @@ build {
     scripts = [
       "installer-scripts/shell/install-dev-dependencies.sh",
       "installer-scripts/shell/install-devtools.sh",
+      "scripts/install-codex-sandbox.sh",
+      "installer-scripts/shell/install-tailscale.sh",
       "installer-scripts/shell/install-qemu-guest-agent.sh",
       "installer-scripts/shell/install-docker.sh",
       "installer-scripts/shell/install-virt.sh",
-      "installer-scripts/shell/install-githubcli.sh",
-      "installer-scripts/shell/install-packer.sh",
-      "installer-scripts/shell/install-terraform.sh",
-      "installer-scripts/shell/install-awscli.sh",
-      "installer-scripts/shell/install-azurecli.sh",
       "installer-scripts/shell/install-unikraft.sh",
     ]
   }
@@ -145,16 +136,8 @@ build {
   provisioner "shell" {
     execute_command = "sudo -u sherpa -i bash '{{.Path}}'"
     scripts = [
-      "installer-scripts/shell/install-rust.sh",
-      "installer-scripts/shell/install-python-dev.sh",
-      "installer-scripts/shell/install-codex.sh",
-      "installer-scripts/shell/install-claudecode.sh",
-      "installer-scripts/shell/install-herdr.sh",
-      "installer-scripts/shell/install-tuicr.sh",
-      "installer-scripts/shell/install-opencode.sh",
       "installer-scripts/shell/install-mise.sh",
-      "installer-scripts/shell/install-nodejs.sh",
-      "installer-scripts/shell/install-pi.sh",
+      "scripts/install-mise-tools.sh",
       "installer-scripts/shell/install-protonpass-cli.sh",
       "installer-scripts/shell/install-nanos.sh",
       "installer-scripts/shell/setup-paths.sh",

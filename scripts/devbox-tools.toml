@@ -1,0 +1,20 @@
+# Installed for sherpa; latest selections are resolved during each image build.
+[tools]
+node = "lts"
+rust = "stable"
+codex = "latest"
+claude = "latest"
+gh = "latest"
+packer = "latest"
+terraform = "latest"
+aws-cli = "latest"
+azure = "latest"
+uv = "latest"
+ruff = "latest"
+ty = "latest"
+herdr = "latest"
+opencode = "latest"
+"npm:@mariozechner/pi-coding-agent" = "latest"
+
+[env]
+DISABLE_UPDATES = "1"

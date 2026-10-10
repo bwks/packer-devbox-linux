@@ -12,6 +12,10 @@ usermod -s /usr/sbin/nologin ubuntu
 # Remove the temporary passwordless sudo rule used by user-level installers.
 rm -f /etc/sudoers.d/packer-sherpa
 
+# Start each image instance with its own Tailscale state.
+systemctl stop tailscaled
+rm -f /var/lib/tailscale/tailscaled.state /var/lib/tailscale/tailscaled.state.tmp
+
 # Reset cloud-init so it runs fresh on first boot
 cloud-init clean --logs --seed
 
